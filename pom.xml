@@ -46,6 +46,7 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <cadence.service.version>0.3.6</cadence.service.version>
     </properties>
 
     <dependencies>
@@ -142,7 +143,8 @@
                         <exclude>src/main/resources/**</exclude>
                         <exclude>src/main/thrift/**</exclude>
                     </excludes>
-                    <errorMessage>Some files do not have the expected license header. Run "mvn license:format" to add.</errorMessage>
+                    <errorMessage>Some files do not have the expected license header. Run "mvn license:format" to add.
+                    </errorMessage>
                 </configuration>
                 <executions>
                     <execution>
@@ -153,7 +155,80 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <plugin>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>1.4.0</version>
+                <executions>
+                    <execution>
+                        <id>install-cadence-service</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/uber/cadence/archive/v${cadence.service.version}.zip</url>
+                            <unpack>true</unpack>
+                            <outputDirectory>${project.build.directory}/cadence-service</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.dkanejs.maven.plugins</groupId>
+                <artifactId>docker-compose-maven-plugin</artifactId>
+                <version>1.0.2</version>
+                <configuration>
+                    <composeFile>${project.build.directory}/cadence-service/cadence-${cadence.service.version}/docker/docker-compose.yml</composeFile>
+                </configuration>
+                <executions>
+                    <!--execution>
+                        <id>up</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>up</goal>
+                        </goals>
+                        <configuration>
+                            <composeFile>${project.build.directory}/cadence-service/cadence-${cadence.service.version}/docker/docker-compose.yml</composeFile>
+                            <detachedMode>true</detachedMode>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>down</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>down</goal>
+                        </goals>
+                        <configuration>
+                            <composeFile>${project.build.directory}/cadence-service/cadence-${cadence.service.version}/docker/docker-compose.yml</composeFile>
+                            <removeVolumes>true</removeVolumes>
+                        </configuration>
+                    </execution-->
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.kew.maven.plugins</groupId>
+                <artifactId>wait-http-maven-plugin</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>wait-http</goal>
+                        </goals>
+                        <configuration>
+                            <protocol>http</protocol>
+                            <host>localhost</host>
+                            <port>1080</port>
+                            <file>/</file>
+                            <maxcount>20</maxcount>
+                            <timeout>10000</timeout>
+                            <initialWait>10000</initialWait>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
